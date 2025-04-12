@@ -18,6 +18,8 @@
         "name": "next"
       }
     ],
+    // Explicitly set baseUrl
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
     }

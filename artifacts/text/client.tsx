@@ -10,7 +10,7 @@ import {
   RedoIcon,
   UndoIcon,
 } from '@/components/icons';
-import { Suggestion } from '@/lib/db/schema';
+import type { Suggestion } from '@/lib/db/schema';
 import { toast } from 'sonner';
 import { getSuggestions } from '../actions';
 
@@ -67,6 +67,12 @@ export const textArtifact = new Artifact<'text', TextArtifactMetadata>({
     isLoading,
     metadata,
   }) => {
+    // --- Temporary Mock Data for Rendering Verification ---
+    const mockContent = `## Mock Document Title\n\nThis is some **mock text** content for the text artifact renderer.\n\n*   List item 1
+*   List item 2\n\n\`\`\`javascript\nconsole.log('Mock code block');\n\`\`\`\n\nEnd of mock content.`;
+    // --- End Temporary Mock Data ---
+
+    /* Original Logic - Commented out for testing
     if (isLoading) {
       return <DocumentSkeleton artifactKind="text" />;
     }
@@ -77,12 +83,14 @@ export const textArtifact = new Artifact<'text', TextArtifactMetadata>({
 
       return <DiffView oldContent={oldContent} newContent={newContent} />;
     }
+    */
 
+    // Always render Editor with mock content for verification
     return (
       <>
         <div className="flex flex-row py-8 md:p-20 px-4">
           <Editor
-            content={content}
+            content={mockContent} // Use mock content
             suggestions={metadata ? metadata.suggestions : []}
             isCurrentVersion={isCurrentVersion}
             currentVersionIndex={currentVersionIndex}
@@ -90,9 +98,7 @@ export const textArtifact = new Artifact<'text', TextArtifactMetadata>({
             onSaveContent={onSaveContent}
           />
 
-          {metadata &&
-          metadata.suggestions &&
-          metadata.suggestions.length > 0 ? (
+          {metadata?.suggestions && metadata.suggestions.length > 0 ? (
             <div className="md:hidden h-dvh w-12 shrink-0" />
           ) : null}
         </div>

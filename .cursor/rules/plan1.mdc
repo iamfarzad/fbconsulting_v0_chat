@@ -1,0 +1,193 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Good. This version covers all architectural, behavioral, and enforcement-level rules clearly.
+
+Here’s a cleaned and ready-to-paste .rules file, with everything you just reviewed integrated correctly — structured, consistent, and focused on enforcement:
+
+⸻
+
+
+
+# .rules
+# Purpose: Define operational and architectural rules for Cursor AI use on this project.
+# Last Updated: April 10, 2025
+
+## General Directives
+- These rules MUST be followed at all times.
+- Reuse relevant logic, structure, or content from:
+  - @plan_for_fbconsulting_webapp.md
+  - @Progress_update.md
+Path to old project that needs to be reused. 
+  - /Users/farzad/vscode/fbconsulting_v0_chat/oldproject
+
+## Development Philosophy
+- Build only what is needed. Do not overengineer.
+- Reuse or extend existing code. Do not rewrite unless broken.
+- Follow clean structure, short logic blocks, and minimal coupling.
+
+---
+
+## 🔁 File Reuse Rules
+- **Check first**: Always inspect `/src` and `/oldproject` before creating anything new.
+- **No duplicates**: Never recreate a component, style, or layout that already exists.
+- **Enhance**: If the old version works but lacks a feature, extend it. Don't rewrite.
+
+---
+
+## 🧩 Frontend (Next.js + Tailwind CSS)
+- Use **Pages Router**, not App Router.
+- All UI blocks go in `/components/sections/`.
+- Use Tailwind utility classes only.
+- Avoid inline styles or global overrides.
+- React server components by default. `"use client"` only when required.
+- Reuse components from:
+  - https://21st.dev
+  - https://github.com/iamfarzad/empathic-voice-interface-starter.git
+  - https://github.com/iamfarzad/blog-nextjs-sanity.git
+
+### Components to Reuse
+- Hero.tsx
+- Features.tsx
+- Testimonials.tsx
+- Services.tsx
+- CTA.tsx
+- Footer.tsx
+
+---
+
+## 🛠 Backend (Express/TypeScript or FastAPI)
+- For Node: `/src/server/routes/` → endpoints, `/services/` → logic.
+- Use `async/await`, not callbacks.
+- Return proper HTTP status codes.
+- All API integration deferred until **frontend is complete**.
+
+---
+
+## Integration
+- Types in `/src/types/`, shared between backend and frontend.
+- RESTful conventions: `GET /api/users`, `POST /api/enrich`, etc.
+- Only fetch from defined routes. Never inline payload formats.
+
+---
+
+## 📁 Folder Structure (Strict)
+frontend/
+├── pages/
+│   ├── index.tsx
+│   ├── about.tsx
+│   ├── contact.tsx
+│   ├── services.tsx
+│   ├── blog/
+│   ├── quote/
+│   └── examples/
+├── components/
+│   ├── sections/
+│   └── ui/
+├── styles/
+├── lib/
+├── public/
+└── .env.local
+
+---
+
+## 🧱 Artifact Renderers (DO NOT BREAK)
+- `/artifacts/` contains renderers for AI output (code, image, sheet, text).
+- These are injected into chat messages and often styled or animated.
+
+### Enforce:
+- Do not rename, restructure, or disable any `/artifacts/` files.
+- Do not remove transitions or break visual compatibility.
+- Never bypass the renderer selection logic.
+- Do not touch `client.tsx` or `server.ts` in these folders unless adding support.
+
+Test rendering for:
+- Code blocks
+- Image display
+- Document text
+- Sheets/tables
+
+---
+
+## 📊 Lead Gen + Chat Architecture
+
+**Pipeline:**
+- Name/email → `/api/enrich` → context
+- → `/api/chat` → Gemini with context
+- → quote
+- → `/api/send-email`
+
+**Backend Plan (Only after frontend complete):**
+- Python 3.10+ / FastAPI
+- Routes:
+  - `/api/enrich`
+  - `/api/chat`
+  - `/api/send-email`
+  - `/api/quote`
+- Use SQLite, Supabase, or Firestore
+
+**Backend Folder (Planned):**
+backend/
+├── main.py
+├── core/
+├── db/
+├── mcp/
+
+---
+
+## 🧪 Rate Limiting
+- Vercel Firewall template on `/api/*`: 50–100 req/min, 15-min block
+- Optional: fallback in-code rate limiter using Redis, TTLCache, or Map
+
+If blocked:
+```json
+{
+  "error": "Rate limit exceeded",
+  "retryAfter": "15m"
+}
+
+
+
+⸻
+
+🧠 Internal Structure Enforcement
+	•	Log ALL progress in /PROJECT_TASKS.md
+	•	No backend development until frontend is production-ready.
+	•	Never break or bypass Vercel AI SDK logic.
+	•	Follow layout and code reuse strategy.
+	•	All updates and additions must be logged immediately in:
+	•	/Users/farzad/vscode/fbconsulting_v0_chat/PROJECT_TASKS.md
+
+⸻
+
+🧼 Formatting & Conventions
+	•	PascalCase → React Components
+	•	camelCase → functions/variables
+	•	kebab-case → filenames
+	•	ESLint + Prettier must pass on all files
+	•	Group imports: external → internal → styles
+
+⸻
+
+⛔ Forbidden Actions
+	•	Do not overengineer.
+	•	Do not change file structure.
+	•	Do not break artifact renderers.
+	•	Do not modify backend plans until instructed.
+	•	Do not skip logging.
+
+Let me know if you want this saved into your actual `.rules` file in the repo or exported for local use.
+
+
+
+documents 
+https://sdk.vercel.ai/providers/ai-sdk-providers/google-vertex
+
+
+https://sdk.vercel.ai/providers/ai-sdk-providers/google-generative-ai
+
+https://sdk.vercel.ai/docs/guides/multi-modal-chatbot
+
+https://sdk.vercel.ai/docs/ai-sdk-core/overview

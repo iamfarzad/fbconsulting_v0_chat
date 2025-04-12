@@ -2,17 +2,22 @@ import { Toaster } from 'sonner';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
+import { ThemeScript } from '@/components/theme-script';
+import { NavBar } from '@/components/layout/Navbar'; // Updated import path
+import { Footer } from '@/components/layout/Footer'; // Import Footer
+import { SharedChatProvider } from '@/lib/context/chat-context';
+import { ExpandableChatWidget } from '@/components/ui/ExpandableChatWidget'; // Import the widget
 
 import './globals.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://chat.vercel.ai'),
-  title: 'Next.js Chatbot Template',
-  description: 'Next.js chatbot template using the AI SDK.',
+  title: 'FB Consulting - AI Solutions',
+  description: 'Expert AI consulting and development services.',
 };
 
 export const viewport = {
-  maximumScale: 1, // Disable auto-zoom on mobile Safari
+  maximumScale: 1,
 };
 
 const geist = Geist({
@@ -27,26 +32,6 @@ const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
 });
 
-const LIGHT_THEME_COLOR = 'hsl(0 0% 100%)';
-const DARK_THEME_COLOR = 'hsl(240deg 10% 3.92%)';
-const THEME_COLOR_SCRIPT = `\
-(function() {
-  var html = document.documentElement;
-  var meta = document.querySelector('meta[name="theme-color"]');
-  if (!meta) {
-    meta = document.createElement('meta');
-    meta.setAttribute('name', 'theme-color');
-    document.head.appendChild(meta);
-  }
-  function updateThemeColor() {
-    var isDark = html.classList.contains('dark');
-    meta.setAttribute('content', isDark ? '${DARK_THEME_COLOR}' : '${LIGHT_THEME_COLOR}');
-  }
-  var observer = new MutationObserver(updateThemeColor);
-  observer.observe(html, { attributes: true, attributeFilter: ['class'] });
-  updateThemeColor();
-})();`;
-
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -55,29 +40,29 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      // `next-themes` injects an extra classname to the body element to avoid
-      // visual flicker before hydration. Hence the `suppressHydrationWarning`
-      // prop is necessary to avoid the React hydration mismatch warning.
-      // https://github.com/pacocoursey/next-themes?tab=readme-ov-file#with-app
       suppressHydrationWarning
       className={`${geist.variable} ${geistMono.variable}`}
     >
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: THEME_COLOR_SCRIPT,
-          }}
-        />
-      </head>
-      <body className="antialiased">
+      {/* Removed hardcoded bg-white */}
+      <body className="antialiased min-h-screen">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="light"
           disableTransitionOnChange
         >
-          <Toaster position="top-center" />
-          {children}
+          <ThemeScript />
+          <SharedChatProvider>
+            <Toaster position="top-center" />
+            <div className="relative flex min-h-screen flex-col">
+              <NavBar />
+              <main className="flex-1 container mx-auto px-4 py-8">
+                {children}
+              </main>
+              {/* Render the chat widget globally */}
+              <ExpandableChatWidget />
+              <Footer /> {/* Add Footer component */}
+            </div>
+          </SharedChatProvider>
         </ThemeProvider>
       </body>
     </html>

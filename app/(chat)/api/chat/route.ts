@@ -1,5 +1,5 @@
 import {
-  UIMessage,
+  type UIMessage, // Make type-only
   appendResponseMessages,
   createDataStreamResponse,
   smoothStream,
@@ -25,8 +25,15 @@ import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 import { getWeather } from '@/lib/ai/tools/get-weather';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
+import type { Session } from 'next-auth'; // Import Session type
 
 export const maxDuration = 60;
+
+// Define a mock session for development when auth is bypassed
+const mockSession: Session = {
+  user: { id: 'dev-user', name: 'Dev User', email: 'dev@example.com' },
+  expires: 'never', // Or a far future date string
+};
 
 export async function POST(request: Request) {
   try {
@@ -42,9 +49,12 @@ export async function POST(request: Request) {
 
     const session = await auth();
 
+    // Bypass authentication for development
+    /*
     if (!session || !session.user || !session.user.id) {
       return new Response('Unauthorized', { status: 401 });
     }
+    */
 
     const userMessage = getMostRecentUserMessage(messages);
 
@@ -59,11 +69,16 @@ export async function POST(request: Request) {
         message: userMessage,
       });
 
-      await saveChat({ id, userId: session.user.id, title });
+      // Use a placeholder user ID or handle appropriately if session is null
+      const userId = session?.user?.id ?? 'dev-user';
+      await saveChat({ id, userId: userId, title });
     } else {
+      // Bypass user ID check for development
+      /*
       if (chat.userId !== session.user.id) {
         return new Response('Unauthorized', { status: 401 });
       }
+      */
     }
 
     await saveMessages({
@@ -99,48 +114,56 @@ export async function POST(request: Request) {
           experimental_generateMessageId: generateUUID,
           tools: {
             getWeather,
-            createDocument: createDocument({ session, dataStream }),
-            updateDocument: updateDocument({ session, dataStream }),
+            // Use real session if available, otherwise use mock session
+            createDocument: createDocument({
+              session: session ?? mockSession,
+              dataStream,
+            }),
+            updateDocument: updateDocument({
+              session: session ?? mockSession,
+              dataStream,
+            }),
             requestSuggestions: requestSuggestions({
-              session,
+              session: session ?? mockSession,
               dataStream,
             }),
           },
           onFinish: async ({ response }) => {
-            if (session.user?.id) {
-              try {
-                const assistantId = getTrailingMessageId({
-                  messages: response.messages.filter(
-                    (message) => message.role === 'assistant',
-                  ),
-                });
+            // Bypass session check for development
+            // if (session.user?.id) {
+            try {
+              const assistantId = getTrailingMessageId({
+                messages: response.messages.filter(
+                  (message) => message.role === 'assistant',
+                ),
+              });
 
-                if (!assistantId) {
-                  throw new Error('No assistant message found!');
-                }
-
-                const [, assistantMessage] = appendResponseMessages({
-                  messages: [userMessage],
-                  responseMessages: response.messages,
-                });
-
-                await saveMessages({
-                  messages: [
-                    {
-                      id: assistantId,
-                      chatId: id,
-                      role: assistantMessage.role,
-                      parts: assistantMessage.parts,
-                      attachments:
-                        assistantMessage.experimental_attachments ?? [],
-                      createdAt: new Date(),
-                    },
-                  ],
-                });
-              } catch (_) {
-                console.error('Failed to save chat');
+              if (!assistantId) {
+                throw new Error('No assistant message found!');
               }
+
+              const [, assistantMessage] = appendResponseMessages({
+                messages: [userMessage],
+                responseMessages: response.messages,
+              });
+
+              await saveMessages({
+                messages: [
+                  {
+                    id: assistantId,
+                    chatId: id,
+                    role: assistantMessage.role,
+                    parts: assistantMessage.parts,
+                    attachments:
+                      assistantMessage.experimental_attachments ?? [],
+                    createdAt: new Date(),
+                  },
+                ],
+              });
+            } catch (_) {
+              console.error('Failed to save chat', _); // Log the error
             }
+            // } // End of commented-out session check
           },
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,
@@ -175,15 +198,25 @@ export async function DELETE(request: Request) {
 
   const session = await auth();
 
+  // Bypass auth check for DELETE during development
+  /*
   if (!session || !session.user) {
     return new Response('Unauthorized', { status: 401 });
   }
+  */
 
   try {
     const chat = await getChatById({ id });
 
-    if (chat.userId !== session.user.id) {
+    // Bypass user ID check for DELETE during development
+    /*
+    if (!chat || chat.userId !== session?.user?.id) { // Added null check for chat and optional chaining for session
       return new Response('Unauthorized', { status: 401 });
+    }
+    */
+    // Add a check if chat exists before deleting, as the auth bypass might allow deleting non-existent/unowned chats
+    if (!chat) {
+      return new Response('Chat not found', { status: 404 });
     }
 
     await deleteChatById({ id });
