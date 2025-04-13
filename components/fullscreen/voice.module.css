@@ -1,0 +1,32 @@
+.dynamicPattern {
+  background-image: radial-gradient(circle at center, rgba(254, 90, 29, 0.03) 0%, transparent 70%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: var(--pattern-size, 0% 0%), 40px 40px, 40px 40px;
+  transition: background-size 1s ease-in-out;
+}
+
+.dynamicPattern[data-active="true"] {
+  --pattern-size: 100% 100%;
+}
+
+.outerRing {
+  background: radial-gradient(circle at center, rgba(254, 90, 29, 0.1) 0%, transparent 70%);
+}
+
+.outerRingSecondary {
+  background: radial-gradient(circle at center, rgba(254, 90, 29, 0.05) 0%, transparent 70%);
+}
+
+.orbActive {
+  background: radial-gradient(circle at center, rgba(254, 90, 29, 0.15) 0%, rgba(0, 0, 0, 1) 70%);
+}
+
+.orbInactive {
+  background: black;
+}
+
+.innerGlow {
+  background: radial-gradient(circle at center, rgba(254, 90, 29, 0.2) 0%, transparent 70%);
+  filter: blur(8px);
+}

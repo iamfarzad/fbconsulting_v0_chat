@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React from 'react';
 import { X } from 'lucide-react';
@@ -6,13 +6,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { generateWaveformBars } from '@/lib/ui-utils';
+import { useBreathAnimation } from '@/hooks/useBreathAnimation';
+import styles from './voice.module.css';
 
-// Define props
 interface FullscreenVoiceOrbProps {
   aiState: string;
   isRecording: boolean;
   transcript: string;
-  handleVoiceToggle: () => void; // Renamed from handleVoiceStart for consistency
+  handleVoiceToggle: () => void;
   handleClose: () => void;
 }
 
@@ -21,97 +22,175 @@ export default function FullscreenVoiceOrb({
   isRecording,
   transcript,
   handleVoiceToggle,
-  handleClose
+  handleClose,
 }: FullscreenVoiceOrbProps) {
-  // States mapped to visual feedback (using props now)
   const isActive = aiState !== 'idle';
   const isPulsing = isRecording || aiState === 'speaking';
   const isProcessing = aiState === 'processing';
+  const { breathScale } = useBreathAnimation({ isActive: isPulsing });
 
   return (
-    // NOTE: This component renders a full fixed overlay. 
-    // Might need adjustment if it's meant to be *part* of FullscreenChatView
-    <div className="fixed inset-0 bg-black/95 backdrop-blur-lg z-[60] flex flex-col items-center justify-center">
-      {/* Close button - uses prop */}
+    <div
+      className={cn(
+        'fixed inset-0 bg-black/95 backdrop-blur-lg z-[60]',
+        'flex flex-col items-center justify-center',
+        styles.dynamicPattern,
+      )}
+      data-active={isActive}
+    >
+      {/* Close button */}
       <Button
         variant="ghost"
         size="icon"
-        onClick={handleClose} // Use prop
-        className="absolute top-4 right-4 text-white/60 hover:text-white"
+        onClick={handleClose}
+        className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors"
       >
-        <X size={24} />
+        <X className="size-6" />
       </Button>
 
       {/* Central orb */}
       <div className="relative">
-        {/* Outer rings - uses isPulsing derived from props */}
+        {/* Outer rings with radial gradient */}
         <AnimatePresence>
           {isPulsing && (
             <>
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1.2, opacity: 0.1 }}
+                animate={{
+                  scale: [1, 1.4, 1],
+                  opacity: [0.15, 0.05, 0.15],
+                }}
                 exit={{ scale: 0.8, opacity: 0 }}
-                className="absolute inset-0 rounded-full border-2 border-orange-500"
+                transition={{
+                  duration: 2,
+                  repeat: Number.POSITIVE_INFINITY,
+                  ease: 'easeInOut',
+                }}
+                className={cn(
+                  'absolute inset-[-30px] rounded-full',
+                  'border-2 border-brand-orange',
+                  styles.outerRing,
+                )}
+                style={{ transform: `scale(${breathScale})` }}
               />
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1.4, opacity: 0.05 }}
+                animate={{
+                  scale: [1, 1.6, 1],
+                  opacity: [0.1, 0.02, 0.1],
+                }}
                 exit={{ scale: 0.8, opacity: 0 }}
-                transition={{ delay: 0.1 }}
-                className="absolute inset-0 rounded-full border-2 border-orange-500"
+                transition={{
+                  duration: 2,
+                  repeat: Number.POSITIVE_INFINITY,
+                  ease: 'easeInOut',
+                  delay: 0.2,
+                }}
+                className={cn(
+                  'absolute inset-[-40px] rounded-full',
+                  'border-2 border-brand-orange',
+                  styles.outerRingSecondary,
+                )}
+                style={{ transform: `scale(${breathScale + 0.2})` }}
               />
             </>
           )}
         </AnimatePresence>
 
-        {/* Main orb button - uses prop */}
+        {/* Main orb button with improved gradients */}
         <motion.button
-          onClick={handleVoiceToggle} // Use prop
+          onClick={handleVoiceToggle}
           className={cn(
-            "relative w-32 h-32 rounded-full",
-            "bg-black border-2",
-            "flex items-center justify-center",
-            "transition-colors duration-300",
-            isPulsing 
-              ? "border-orange-500 shadow-lg shadow-orange-500/20" 
-              : "border-white/20",
-            isActive && "border-orange-500/50"
+            'relative size-32 rounded-full',
+            'flex items-center justify-center',
+            'transition-all duration-300',
+            'border-2',
+            isPulsing
+              ? 'border-brand-orange shadow-lg shadow-brand-orange/20'
+              : 'border-white/20',
+            isActive && 'border-brand-orange/50',
+            isPulsing ? styles.orbActive : styles.orbInactive,
           )}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
-          {/* Waveform visualization - uses derived state */}
-          <div className="flex items-center gap-1">
+          {/* Waveform visualization */}
+          <div
+            className={cn(
+              'flex items-center gap-1',
+              'transition-opacity duration-300',
+              isProcessing && 'opacity-50',
+            )}
+          >
             {generateWaveformBars(6, isActive || isRecording)}
           </div>
+
+          {/* Inner glow */}
+          <div
+            className={cn(
+              'absolute inset-0 rounded-full',
+              'opacity-0 transition-all duration-300',
+              isPulsing && 'opacity-100',
+              styles.innerGlow,
+            )}
+          />
         </motion.button>
 
-        {/* Status text - uses props */}
-        <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2">
+        {/* Status text with improved animation */}
+        <motion.div
+          className="absolute -bottom-16 left-1/2 -translate-x-1/2"
+          initial={false}
+          animate={{
+            opacity: isPulsing ? 1 : 0.6,
+            y: isPulsing ? 0 : 2,
+          }}
+          transition={{ duration: 0.2 }}
+        >
           <span className="font-mono text-sm text-white/60">
-            {isProcessing 
-              ? "Processing..." 
-              : isRecording 
-                ? "Listening..." 
-                : aiState === 'speaking' 
-                  ? "Speaking..." 
-                  : "Press to speak"}
+            {isProcessing
+              ? 'Processing...'
+              : isRecording
+                ? 'Listening...'
+                : aiState === 'speaking'
+                  ? 'Speaking...'
+                  : 'Press to speak'}
           </span>
-        </div>
+        </motion.div>
       </div>
 
-      {/* Transcript or processing display - uses props */}
+      {/* Transcript or processing display with improved glassmorphism */}
       <AnimatePresence mode="wait">
         {(transcript || isProcessing) && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.2 }}
             className="absolute bottom-24 left-1/2 -translate-x-1/2 w-full max-w-2xl px-6"
           >
-            <div className="bg-neutral-900/90 backdrop-blur-sm border border-white/10 p-4 rounded-2xl">
+            <div
+              className={cn(
+                'bg-neutral-900/80 backdrop-blur-xl',
+                'border border-white/10',
+                'p-4 rounded-2xl',
+                'shadow-lg shadow-black/20',
+              )}
+            >
               <p className="text-center text-white/90">
                 {isProcessing ? (
-                  <span className="text-orange-500">Processing your request...</span>
+                  <span className="text-brand-orange">
+                    <motion.span
+                      initial={{ opacity: 0.5 }}
+                      animate={{ opacity: 1 }}
+                      transition={{
+                        duration: 1,
+                        repeat: Number.POSITIVE_INFINITY,
+                        repeatType: 'reverse',
+                      }}
+                    >
+                      Processing your request...
+                    </motion.span>
+                  </span>
                 ) : (
                   transcript
                 )}

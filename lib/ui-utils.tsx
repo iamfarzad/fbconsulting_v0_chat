@@ -6,26 +6,50 @@ import React from 'react'; // Ensure React is imported for JSX
  * @param isAnimated - Whether the bars should be animated (pulsing).
  * @returns An array of JSX div elements representing the waveform bars.
  */
-export const generateWaveformBars = (count: number, isAnimated: boolean): React.ReactElement[] => { // Return ReactElement[]
-  return [...Array(count)].map((_, i) => {
-    // Define style object inside the map function
-    const style: React.CSSProperties = {
-      height: isAnimated ? `${4 + Math.random() * 16}px` : '4px', // Adjusted height range
-      animationDelay: `${i * 0.08}s`, // Slightly faster delay
-      opacity: isAnimated ? 0.3 + Math.random() * 0.7 : 0.4, // Adjusted opacity
-    };
+export const generateWaveformBars = (
+  count: number,
+  isAnimated: boolean,
+): React.ReactElement[] => {
+  return Array.from({ length: count }, (_, i) => {
+    const uniqueId = `waveform-bar-${Math.random().toString(36).substr(2, 9)}`;
+    const height = isAnimated ? 4 + Math.random() * 16 : 4;
+    const opacity = isAnimated ? 0.3 + Math.random() * 0.7 : 0.4;
 
-    // Return a valid JSX element
     return (
       <div
-        key={i}
+        key={uniqueId}
         className={`w-0.5 rounded-full transition-all duration-75 ${
-          isAnimated ? 'animate-pulse bg-primary' : 'bg-neutral-600 dark:bg-neutral-400' // Use theme colors
+          isAnimated
+            ? 'animate-pulse bg-primary'
+            : 'bg-neutral-600 dark:bg-neutral-400'
         }`}
-        style={style} // Apply the style object
+        style={{
+          height: `${height}px`,
+          animationDelay: `${i * 0.08}s`,
+          opacity,
+        }}
       />
     );
   });
 };
 
 // Add other UI utility functions here if needed in the future
+
+export function generateDynamicPattern(isActive: boolean) {
+  const basePattern = `
+    radial-gradient(circle at center, 
+      rgba(254, 90, 29, 0.03) 0%, 
+      transparent 70%
+    ),
+    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px)
+  `;
+
+  return {
+    backgroundImage: basePattern,
+    backgroundSize: isActive
+      ? '100% 100%, 40px 40px, 40px 40px'
+      : '0% 0%, 40px 40px, 40px 40px',
+    transition: 'background-size 1s ease-in-out',
+  };
+}
