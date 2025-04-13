@@ -1,36 +1,51 @@
 'use client';
 
-import { Message } from 'ai';
+import type { Message } from 'ai';
+import { IconOpenAI, IconUser } from './icons';
 import { cn } from '@/lib/utils';
-import { Markdown } from '@/components/markdown';
 
 export interface ChatMessageProps {
   message: Message;
+  className?: string;
 }
 
-export function ChatMessage({ message }: ChatMessageProps) {
+export function ChatMessage({ message, className }: ChatMessageProps) {
+  const isAI = message.role === 'assistant';
+
   return (
     <div
       className={cn(
-        'group relative mb-4 flex items-start md:gap-6',
-        message.role === 'user' ? 'justify-end' : 'justify-start',
+        'group relative flex items-start gap-4 px-4',
+        'hover:bg-accent/5',
+        className,
       )}
     >
       <div
         className={cn(
-          'flex-1 space-y-2 overflow-hidden px-1',
-          message.role === 'user' ? 'text-right' : 'text-left',
+          'mt-1 flex size-8 shrink-0 select-none items-center justify-center',
+          'rounded-md border bg-background/80 backdrop-blur-md',
+          isAI ? 'border-brand-orange/50' : 'border-border/50',
         )}
       >
-        <div
-          className={cn(
-            'inline-block max-w-[85%] rounded-lg px-4 py-2.5 text-sm',
-            message.role === 'user'
-              ? 'bg-orange-500 text-white'
-              : 'bg-gray-100 text-gray-900',
-          )}
-        >
-          <Markdown>{message.content}</Markdown>
+        {isAI ? (
+          <IconOpenAI className="size-5 text-brand-orange" />
+        ) : (
+          <IconUser className="size-5" />
+        )}
+      </div>
+
+      <div className="flex-1 space-y-2">
+        <div className="prose break-words dark:prose-invert prose-p:leading-relaxed prose-pre:p-0">
+          <div
+            className={cn(
+              'rounded-lg p-4',
+              'bg-background/80 backdrop-blur-md',
+              'border shadow-sm',
+              isAI ? 'border-brand-orange/20' : 'border-border/50',
+            )}
+          >
+            {message.content}
+          </div>
         </div>
       </div>
     </div>

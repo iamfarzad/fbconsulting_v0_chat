@@ -7,6 +7,7 @@ import { NavBar } from '@/components/layout/Navbar'; // Updated import path
 import { Footer } from '@/components/layout/Footer'; // Import Footer
 import { SharedChatProvider } from '@/lib/context/chat-context';
 import { ExpandableChatWidget } from '@/components/ui/ExpandableChatWidget'; // Import the widget
+import { SidebarProvider } from '@/components/ui/sidebar'; // Import SidebarProvider
 
 import './globals.css';
 
@@ -52,16 +53,18 @@ export default async function RootLayout({
         >
           <ThemeScript />
           <SharedChatProvider>
-            <Toaster position="top-center" />
-            <div className="relative flex min-h-screen flex-col">
-              <NavBar />
-              <main className="flex-1 container mx-auto px-4 py-8">
-                {children}
-              </main>
-              {/* Render the chat widget globally */}
-              <ExpandableChatWidget />
-              <Footer /> {/* Add Footer component */}
-            </div>
+            <SidebarProvider>
+              <Toaster position="top-center" />
+              <div className="relative flex min-h-screen flex-col">
+                <NavBar />
+                <main className="flex-1 container mx-auto px-4 py-8">
+                  {children}
+                </main>
+                {/* Render the chat widget globally */}
+                <ExpandableChatWidget />
+                <Footer /> {/* Add Footer component */}
+              </div>
+            </SidebarProvider>
           </SharedChatProvider>
         </ThemeProvider>
       </body>

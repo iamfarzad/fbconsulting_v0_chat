@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, forwardRef } from 'react'; // Import forwardRef directly
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
@@ -27,16 +27,21 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Menu, Moon, Sun, Book, Trees, Sunset, Zap } from 'lucide-react';
-// Assuming Logo3D and SearchButton are available or will be added
-// import { Logo3D } from '@/components/3d/Logo3D';
-// import { SearchButton } from '@/components/ui/search/SearchButton';
-// import { SearchBar } from '@/components/ui/search/SearchBar';
+import {
+  Menu,
+  Moon,
+  Sun,
+  Book,
+  Trees,
+  Sunset,
+  Zap,
+  Search as SearchIcon,
+} from 'lucide-react'; // Added SearchIcon
+import { SearchDialog } from '@/components/ui/search/SearchDialog';
 
 // --- Data from ShadcnblocksNavbarDemo ---
 const logoData = {
   url: '/',
-  // src: "https://www.shadcnblocks.com/images/block/block-1.svg", // Using text logo for now
   alt: 'F.B Consulting',
   title: 'F.B Consulting',
 };
@@ -128,7 +133,8 @@ const ctaButtonData = {
 // --- End Data ---
 
 // ListItem component for NavigationMenu
-const ListItem = React.forwardRef<
+const ListItem = forwardRef<
+  // Use forwardRef directly
   React.ElementRef<'a'>,
   React.ComponentPropsWithoutRef<'a'> & { icon?: React.ReactNode }
 >(({ className, title, children, icon, ...props }, ref) => {
@@ -162,6 +168,7 @@ export function NavBar() {
   const { theme, setTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // Scroll effect
   useEffect(() => {
@@ -176,27 +183,24 @@ export function NavBar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [scrolled]);
 
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
-
   return (
     <header
       className={cn(
-        'sticky top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out border-b', // Added sticky and border-b
+        'sticky top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out border-b',
         scrolled
-          ? 'bg-background/90 backdrop-blur-md shadow-sm'
-          : 'bg-background', // Use theme background, add shadow on scroll
+          ? 'glassmorphism-base shadow-sm'
+          : 'bg-transparent border-transparent',
       )}
     >
-      <div className="container flex h-14 items-center justify-between">
+      <div className="container flex h-16 items-center justify-between">
         {/* --- Desktop Navbar --- */}
         <nav className="hidden lg:flex flex-1 items-center justify-between">
           {/* Left Section: Logo + Menu */}
           <div className="flex items-center gap-6">
             <Link href={logoData.url} className="flex items-center gap-2">
-              {/* <Logo3D size="w-8 h-8" /> Placeholder if Logo3D is not ready */}
-              <span className="text-lg font-semibold">{logoData.title}</span>
+              <span className="text-lg font-semibold text-gradient">
+                {logoData.title}
+              </span>
             </Link>
             <NavigationMenu>
               <NavigationMenuList>
@@ -208,7 +212,7 @@ export function NavBar() {
                           {item.title}
                         </NavigationMenuTrigger>
                         <NavigationMenuContent>
-                          <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
+                          <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
                             {item.items.map((component) => (
                               <ListItem
                                 key={component.title}
@@ -238,20 +242,29 @@ export function NavBar() {
           </div>
           {/* Right Section: Search, Dark Mode, CTA */}
           <div className="flex items-center gap-2">
-            {/* <SearchButton variant="ghost" iconOnly /> Placeholder */}
             <Button
               variant="ghost"
               size="icon"
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
+              onClick={() => setSearchOpen(true)}
+              className="text-muted-foreground hover:text-foreground"
             >
-              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">Search</span>
+              <SearchIcon className="size-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Sun className="size-5 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute size-5 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">Toggle theme</span>
             </Button>
             <Button
               asChild
               size="sm"
-              className="bg-brand-orange hover:bg-brand-orange/90 text-white"
+              className="bg-brand-orange hover:bg-brand-orange/90 text-white ml-2"
             >
               <Link href={ctaButtonData.url}>{ctaButtonData.text}</Link>
             </Button>
@@ -262,19 +275,21 @@ export function NavBar() {
         <div className="flex lg:hidden flex-1 items-center justify-between">
           {/* Left: Logo */}
           <Link href={logoData.url} className="flex items-center gap-2">
-            {/* <Logo3D size="w-8 h-8" /> Placeholder */}
-            <span className="text-lg font-semibold">{logoData.title}</span>
+            <span className="text-lg font-semibold text-gradient">
+              {logoData.title}
+            </span>
           </Link>
           {/* Right: Theme Toggle, Hamburger */}
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
+              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              className="text-muted-foreground hover:text-foreground"
             >
-              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <Sun className="size-5 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute size-5 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">Toggle theme</span>
             </Button>
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
@@ -283,10 +298,7 @@ export function NavBar() {
                   <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent
-                side="right"
-                className="w-[300px] sm:w-[400px] overflow-y-auto"
-              >
+              <SheetContent side="right" className="w-full sm:w-96">
                 <SheetHeader className="mb-4">
                   <SheetTitle>
                     <Link
@@ -294,19 +306,14 @@ export function NavBar() {
                       className="flex items-center gap-2"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      {/* <Logo3D size="w-8 h-8" /> Placeholder */}
-                      <span className="text-lg font-semibold">
+                      <span className="text-lg font-semibold text-gradient">
                         {logoData.title}
                       </span>
                     </Link>
                   </SheetTitle>
                 </SheetHeader>
-                {/* <div className="mb-6"> <SearchBar onSearch={() => {}} className="w-full" /> </div> Placeholder */}
                 <div className="flex flex-col gap-6">
-                  <Accordion
-                    type="multiple"
-                    className="flex w-full flex-col gap-1"
-                  >
+                  <Accordion type="multiple" className="w-full">
                     {menuData.map((item) => (
                       <AccordionItem
                         value={item.title}
@@ -391,6 +398,7 @@ export function NavBar() {
           </div>
         </div>
       </div>
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
     </header>
   );
 }

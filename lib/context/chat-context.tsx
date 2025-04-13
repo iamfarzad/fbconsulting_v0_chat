@@ -8,9 +8,12 @@ import React, {
   type ReactNode,
   type Dispatch,
   type SetStateAction,
+  useEffect, // Import useEffect
 } from 'react';
 import { useChat, type UseChatHelpers } from '@ai-sdk/react';
 import { nanoid } from 'nanoid'; // Use nanoid for consistent ID generation if needed
+import { useVoiceRecording } from '@/hooks/useVoiceRecording'; // Import voice hook
+import type { VoiceState } from '@/components/ui/VoiceOrb'; // Use 'import type'
 
 // Define the shape of the context data, extending UseChatHelpers
 export interface SharedChatContextType extends UseChatHelpers {
@@ -18,9 +21,15 @@ export interface SharedChatContextType extends UseChatHelpers {
   toggleFullscreen: () => void;
   isArtifactVisible: boolean;
   toggleArtifactVisibility: () => void;
-  // Manage widget state within the context
+  // Widget state
   isWidgetOpen: boolean;
-  toggleWidget: () => void; // Use a toggle function
+  toggleWidget: (forceState?: boolean) => void; // Allow forcing state
+  // Voice state and actions
+  voiceState: VoiceState;
+  transcribedVoiceText: string | null; // Store the final transcribed text
+  startVoiceInput: () => void;
+  stopVoiceInput: () => void;
+  clearTranscribedText: () => void; // Add function to clear text after use
 }
 
 // Create the context with a default value (or null)
@@ -35,7 +44,47 @@ export function SharedChatProvider({ children }: SharedChatProviderProps) {
   // --- Correct placement for all state hooks ---
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isArtifactVisible, setIsArtifactVisible] = useState(false);
-  const [isWidgetOpen, setIsWidgetOpen] = useState(false); // Correct placement
+  const [isWidgetOpen, setIsWidgetOpen] = useState(false);
+
+  // --- Voice Recording State ---
+  const {
+    isRecording,
+    isTranscribing,
+    transcribedText: rawTranscribedText, // Rename to avoid conflict
+    startRecording,
+    stopRecording,
+    // error: voiceError, // Removed - Hook doesn't seem to provide it
+  } = useVoiceRecording();
+
+  // State to hold the final transcribed text until consumed
+  const [transcribedVoiceText, setTranscribedVoiceText] = useState<
+    string | null
+  >(null);
+
+  // Effect to update transcribedVoiceText when transcription finishes
+  useEffect(() => {
+    // Only update if not recording and not transcribing, and there's new text
+    if (!isRecording && !isTranscribing && rawTranscribedText) {
+      setTranscribedVoiceText(rawTranscribedText);
+    }
+    // Don't clear rawTranscribedText here, let the hook manage its state
+  }, [isRecording, isTranscribing, rawTranscribedText]);
+
+  // Function to clear the transcribed text after it's been used (e.g., put into input)
+  const clearTranscribedText = useCallback(() => {
+    setTranscribedVoiceText(null);
+    // Potentially clear the hook's internal text too if needed/possible
+  }, []);
+
+  // Determine VoiceOrb state based on hook state
+  const determineVoiceState = (): VoiceState => {
+    // if (voiceError) return 'error'; // Removed error check
+    if (isRecording) return 'listening';
+    if (isTranscribing) return 'thinking';
+    return 'idle';
+  };
+  const currentVoiceState = determineVoiceState();
+  // --- End Voice Recording State ---
 
   // Memoized toggle function for fullscreen
   const toggleFullscreen = useCallback(() => {
@@ -49,10 +98,22 @@ export function SharedChatProvider({ children }: SharedChatProviderProps) {
     setIsArtifactVisible((prev) => !prev);
   }, []);
 
-  // Toggle function for the widget - correctly uses setIsWidgetOpen from scope
-  const toggleWidget = useCallback(() => {
-    setIsWidgetOpen((prev) => !prev);
-  }, []); // Dependency array is empty
+  // Toggle function for the widget, allowing optional force state
+  const toggleWidget = useCallback((forceState?: boolean) => {
+    setIsWidgetOpen((prev) => (forceState !== undefined ? forceState : !prev));
+  }, []);
+
+  // --- Voice Input Actions ---
+  const startVoiceInput = useCallback(() => {
+    // Ensure widget is open when starting voice input
+    toggleWidget(true);
+    startRecording();
+  }, [startRecording, toggleWidget]);
+
+  const stopVoiceInput = useCallback(() => {
+    stopRecording();
+  }, [stopRecording]);
+  // --- End Voice Input Actions ---
 
   // Initialize useChat once here
   const chatHelpers = useChat({
@@ -78,8 +139,14 @@ export function SharedChatProvider({ children }: SharedChatProviderProps) {
         toggleFullscreen,
         isArtifactVisible,
         toggleArtifactVisibility,
-        isWidgetOpen, // Correctly provided from state
-        toggleWidget, // Correctly provided
+        isWidgetOpen,
+        toggleWidget,
+        // Voice properties
+        voiceState: currentVoiceState,
+        transcribedVoiceText,
+        startVoiceInput,
+        stopVoiceInput,
+        clearTranscribedText,
       }}
     >
       {children}

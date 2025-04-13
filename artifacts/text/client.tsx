@@ -10,31 +10,74 @@ import {
   RedoIcon,
   UndoIcon,
 } from '@/components/icons';
-import type { Suggestion } from '@/lib/db/schema';
+import type { Suggestion as DBSuggestion } from '@/lib/db/schema'; // Rename imported type
 import { toast } from 'sonner';
 import { getSuggestions } from '../actions';
 
+// Reverted: Using full Suggestion type from schema
 interface TextArtifactMetadata {
-  suggestions: Array<Suggestion>;
+  suggestions: Array<DBSuggestion>; // Use renamed type
 }
 
 export const textArtifact = new Artifact<'text', TextArtifactMetadata>({
   kind: 'text',
   description: 'Useful for text content, like drafting essays and emails.',
   initialize: async ({ documentId, setMetadata }) => {
-    const suggestions = await getSuggestions({ documentId });
+    // Explicitly type the result from getSuggestions
+    const suggestions: DBSuggestion[] = await getSuggestions({ documentId }); // Use renamed type
 
+    // This should now work if 'suggestions' is correctly typed as DBSuggestion[]
     setMetadata({
       suggestions,
     });
   },
   onStreamPart: ({ streamPart, setMetadata, setArtifact }) => {
+    // Removed documentId from parameters
     if (streamPart.type === 'suggestion') {
-      setMetadata((metadata) => {
+      // Assume streamPart.content contains partial suggestion data
+      const partialSuggestion = streamPart.content as Partial<DBSuggestion> & {
+        // Use renamed type
+        id: string; // Assume id is always present
+        suggestedText: string; // Assume suggestedText is always present
+        originalText?: string; // Optional
+        description?: string; // Optional
+      };
+
+      // Validate essential fields from the stream
+      if (
+        typeof partialSuggestion?.id !== 'string' ||
+        typeof partialSuggestion?.suggestedText !== 'string'
+      ) {
+        console.error(
+          'Streamed suggestion is missing essential fields (id, suggestedText):',
+          partialSuggestion,
+        );
+        return; // Skip adding malformed suggestion
+      }
+
+      // Construct a full Suggestion object for the metadata array
+      // Provide defaults for fields likely missing from the stream.
+      // WARNING: These defaults might be incorrect for application logic.
+      const fullSuggestion: DBSuggestion = {
+        // Use renamed type
+        id: partialSuggestion.id,
+        suggestedText: partialSuggestion.suggestedText,
+        originalText: partialSuggestion.originalText ?? '', // Default if missing
+        description: partialSuggestion.description ?? null, // Default if missing
+        documentId: 'unknown-doc-id', // Placeholder - documentId is not available here
+        documentCreatedAt: new Date(), // Placeholder - Ideally get from context or stream
+        isResolved: false, // Default
+        userId: 'unknown-user-id', // Placeholder - Ideally get from context or stream
+        createdAt: new Date(), // Placeholder
+      };
+
+      setMetadata((metadata: TextArtifactMetadata | undefined) => {
+        // Explicitly type metadata
+        const currentSuggestions = metadata?.suggestions ?? [];
         return {
           suggestions: [
-            ...metadata.suggestions,
-            streamPart.content as Suggestion,
+            ...currentSuggestions,
+            fullSuggestion, // Add the constructed full Suggestion
           ],
         };
       });

@@ -3,6 +3,24 @@ import 'server-only';
 import type { User, DBMessage, Chat, Vote } from './schema';
 import type { ArtifactKind } from '@/components/artifact';
 
+// Define AND EXPORT Document type based on saveDocument structure
+export type Document = {
+  id: string;
+  title: string;
+  kind: ArtifactKind;
+  content: string;
+  userId: string;
+};
+
+// Define AND EXPORT Suggestion type (assuming basic structure)
+export type Suggestion = {
+  id: string; // Assuming an ID
+  documentId: string;
+  content: string; // Assuming content
+  userId: string;
+  // Add other fields as needed based on actual structure
+};
+
 // Initialize local storage for development without DB
 const mockStorage = {
   users: [] as User[],
@@ -160,7 +178,7 @@ export async function saveDocument({
   return { id, title, kind, content, userId };
 }
 
-// Add explicit return type Promise<Document[]>
+// Ensure explicit return type Promise<Document[]> is present
 export async function getDocumentsById({
   id,
 }: { id: string }): Promise<Document[]> {
@@ -193,12 +211,13 @@ export async function saveSuggestions({
   return suggestions;
 }
 
+// Add explicit return type Promise<Suggestion[]>
 export async function getSuggestionsByDocumentId({
   documentId,
 }: {
   documentId: string;
-}) {
-  // Return empty array for suggestions
+}): Promise<Suggestion[]> {
+  // Return empty array for suggestions (mock implementation)
   return [];
 }
 

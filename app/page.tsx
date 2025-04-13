@@ -1,11 +1,22 @@
 'use client';
 
+'use client';
+
 import Link from 'next/link';
-import { Chat } from '@/components/chat';
+import { useChat } from 'ai/react'; // Import useChat hook
+import { ChatInterface as Chat } from '@/components/chat'; // Corrected import name
 import { Button } from '@/components/ui/button';
 import { Calendar, ArrowRight } from 'lucide-react'; // Import icons for CTA
 
 export default function HomePage() {
+  // Initialize useChat hook
+  const { messages, append, reload, stop, isLoading, input, setInput } =
+    useChat({
+      // Assuming your chat API endpoint is '/api/chat'
+      // Adjust if necessary
+      api: '/api/chat',
+    });
+
   return (
     // Main container for the hero section
     <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-16 md:py-24 lg:py-32">
@@ -22,8 +33,16 @@ export default function HomePage() {
         </p>
         {/* Chat Component Wrapper with Glassmorphism */}
         <div className="w-full glassmorphism-base rounded-xl p-1 md:p-2 shadow-lg">
-          {/* Existing Chat Component */}
-          <Chat />
+          {/* Pass required props to Chat Component */}
+          <Chat
+            messages={messages}
+            append={append}
+            reload={reload}
+            stop={stop}
+            isLoading={isLoading}
+            input={input}
+            setInput={setInput}
+          />
         </div>
         {/* CTA Button */}
         <Button

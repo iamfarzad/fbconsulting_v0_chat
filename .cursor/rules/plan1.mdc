@@ -38,8 +38,10 @@ Path to old project that needs to be reused.
 ---
 
 ## 🧩 Frontend (Next.js + Tailwind CSS)
-- Use **Pages Router**, not App Router.
-- All UI blocks go in `/components/sections/`.
+- Use **App Router**, not Pages Router.
+- Core page layouts/templates go in `/app/`.
+- Reusable UI components go in `/components/ui/`.
+- Larger page sections or composite components go in `/components/sections/`.
 - Use Tailwind utility classes only.
 - Avoid inline styles or global overrides.
 - React server components by default. `"use client"` only when required.
@@ -74,22 +76,28 @@ Path to old project that needs to be reused.
 ---
 
 ## 📁 Folder Structure (Strict)
-frontend/
-├── pages/
-│   ├── index.tsx
-│   ├── about.tsx
-│   ├── contact.tsx
-│   ├── services.tsx
-│   ├── blog/
-│   ├── quote/
-│   └── examples/
-├── components/
-│   ├── sections/
-│   └── ui/
-├── styles/
-├── lib/
-├── public/
-└── .env.local
+app/                  # Main application routes and layouts
+├── (auth)/           # Authentication related routes/pages
+├── (chat)/           # Chat specific routes/pages
+├── layout.tsx        # Root layout
+├── page.tsx          # Root page (e.g., homepage)
+├── globals.css       # Global styles
+└── ...               # Other route groups or pages (e.g., about, services)
+components/
+├── ui/               # Reusable base UI elements (shadcn/ui style)
+├── sections/         # Larger page sections (Hero, Features, etc.)
+├── layout/           # Layout specific components (Navbar, Footer)
+└── ...               # Other component categories (e.g., chat, icons)
+lib/                  # Utility functions, hooks, context, AI providers, DB logic
+├── ai/
+├── db/
+├── hooks/
+├── context/
+└── utils.ts          # General utilities
+public/               # Static assets (images, fonts)
+artifacts/            # Artifact renderers (Keep structure as is)
+└── ...
+.env.local            # Environment variables
 
 ---
 

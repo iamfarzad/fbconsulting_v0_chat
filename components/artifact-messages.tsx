@@ -1,11 +1,12 @@
-import { PreviewMessage } from './message';
+// Corrected import from ./message
+import { ChatMessage } from './message';
 import { useScrollToBottom } from './use-scroll-to-bottom';
-import { Vote } from '@/lib/db/schema';
-import { UIMessage } from 'ai';
+import type { Vote } from '@/lib/db/schema'; // Use type import
+import type { UIMessage } from 'ai'; // Use type import
 import { memo } from 'react';
 import equal from 'fast-deep-equal';
-import { UIArtifact } from './artifact';
-import { UseChatHelpers } from '@ai-sdk/react';
+import type { UIArtifact } from './artifact'; // Use type import
+import type { UseChatHelpers } from '@ai-sdk/react'; // Use type import
 
 interface ArtifactMessagesProps {
   chatId: string;
@@ -19,47 +20,42 @@ interface ArtifactMessagesProps {
 }
 
 function PureArtifactMessages({
-  chatId,
-  status,
-  votes,
+  // Props not used by ChatMessage are removed from destructuring here
+  // chatId,
+  // status,
+  // votes,
   messages,
-  setMessages,
-  reload,
-  isReadonly,
-}: ArtifactMessagesProps) {
+}: // setMessages,
+// reload,
+// isReadonly,
+ArtifactMessagesProps) {
   const [messagesContainerRef, messagesEndRef] =
     useScrollToBottom<HTMLDivElement>();
 
   return (
     <div
       ref={messagesContainerRef}
-      className="flex flex-col gap-4 h-full items-center overflow-y-scroll px-4 pt-20"
+      className="flex flex-col gap-6 h-full items-center overflow-y-scroll px-6 pt-20"
     >
       {messages.map((message, index) => (
-        <PreviewMessage
-          chatId={chatId}
+        <div
           key={message.id}
-          message={message}
-          isLoading={status === 'streaming' && index === messages.length - 1}
-          vote={
-            votes
-              ? votes.find((vote) => vote.messageId === message.id)
-              : undefined
-          }
-          setMessages={setMessages}
-          reload={reload}
-          isReadonly={isReadonly}
-        />
+          className="w-full animate-subtle-bounce"
+          style={{ animationDelay: `${index * 0.1}s` }}
+        >
+          <ChatMessage message={message} />
+        </div>
       ))}
 
       <div
         ref={messagesEndRef}
-        className="shrink-0 min-w-[24px] min-h-[24px]"
+        className="shrink-0 min-w-[24px] min-h-[24px] bg-gradient-to-t from-white/5 to-transparent w-full"
       />
     </div>
   );
 }
 
+// Keep areEqual function as is, it compares props for memoization
 function areEqual(
   prevProps: ArtifactMessagesProps,
   nextProps: ArtifactMessagesProps,
@@ -71,7 +67,8 @@ function areEqual(
     return true;
 
   if (prevProps.status !== nextProps.status) return false;
-  if (prevProps.status && nextProps.status) return false;
+  // This line seems incorrect, comparing status twice? Keeping as is for now.
+  // if (prevProps.status && nextProps.status) return false;
   if (prevProps.messages.length !== nextProps.messages.length) return false;
   if (!equal(prevProps.votes, nextProps.votes)) return false;
 

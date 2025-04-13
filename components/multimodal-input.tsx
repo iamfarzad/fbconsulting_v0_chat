@@ -23,8 +23,9 @@ import { Textarea } from './ui/textarea';
 import { SuggestedActions } from './suggested-actions';
 import equal from 'fast-deep-equal';
 import type { UseChatHelpers } from '@ai-sdk/react';
-import { useVoiceRecording } from '@/hooks/useVoiceRecording';
-import VoiceOrb from './ui/VoiceOrb'; // Import the new VoiceOrb component
+// import { useVoiceRecording } from '@/hooks/useVoiceRecording'; // Removed local hook
+import { useSharedChat } from '@/lib/context/chat-context'; // Import shared context hook
+import VoiceOrb from './ui/VoiceOrb'; // VoiceState comes from context now
 
 // Define the expected structure from uploadFile based on usage
 interface UploadedFileData {
@@ -63,13 +64,14 @@ function PureMultimodalInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
 
+  // Use shared context for voice state and actions
   const {
-    isRecording,
-    isTranscribing,
-    transcribedText,
-    startRecording,
-    stopRecording,
-  } = useVoiceRecording();
+    voiceState,
+    transcribedVoiceText,
+    startVoiceInput,
+    stopVoiceInput,
+    clearTranscribedText,
+  } = useSharedChat();
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -96,12 +98,15 @@ function PureMultimodalInput({
     '',
   );
 
+  // Effect to handle transcribed text from context
   useEffect(() => {
-    if (transcribedText && !isTranscribing) {
-      setInput(transcribedText);
+    if (transcribedVoiceText) {
+      setInput(transcribedVoiceText);
       adjustHeight();
+      clearTranscribedText(); // Clear the text from context after using it
     }
-  }, [transcribedText, isTranscribing, setInput]);
+    // Only depend on transcribedVoiceText and setInput, clearTranscribedText
+  }, [transcribedVoiceText, setInput, clearTranscribedText]);
 
   useEffect(() => {
     if (input) {
@@ -202,17 +207,28 @@ function PureMultimodalInput({
     [setAttachments],
   );
 
+  // Use context actions for toggling listening state
   const toggleListening = () => {
-    if (isRecording) {
-      stopRecording();
-    } else {
-      setInput('');
-      startRecording();
+    if (voiceState === 'listening') {
+      stopVoiceInput();
+    } else if (voiceState === 'idle' || voiceState === 'error') {
+      setInput(''); // Clear input before starting recording
+      startVoiceInput();
     }
+    // Do nothing if 'thinking'
   };
 
+  // No need for local determineVoiceState, use voiceState from context directly
+  // const currentVoiceState = voiceState; // Already available
+
+  // Determine if input should be disabled based on voice state or chat status
+  const isInputDisabled =
+    voiceState === 'listening' ||
+    voiceState === 'thinking' ||
+    status === 'submitted';
+
   return (
-    <div className="relative w-full flex flex-col gap-4">
+    <div className="relative w-full flex flex-col gap-4 px-4">
       {messages.length === 0 &&
         attachments.length === 0 &&
         uploadQueue.length === 0 && (
@@ -254,10 +270,12 @@ function PureMultimodalInput({
         value={input}
         onChange={handleInput}
         className={cx(
-          'min-h-[50px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-xl !text-sm',
-          'bg-zinc-900 text-zinc-100 placeholder:text-zinc-500',
-          'py-3 pl-16 pr-12', // Padding adjusted
-          'border border-zinc-700 focus-visible:ring-1 focus-visible:ring-offset-0 focus-visible:ring-zinc-600 focus-visible:ring-offset-zinc-900',
+          'min-h-[50px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl',
+          'text-base md:text-sm text-white placeholder:text-white/50',
+          'py-3 pl-14 pr-12',
+          'glassmorphism-base border border-white/10',
+          'focus-visible:ring-1 focus-visible:ring-brand-orange focus-visible:border-brand-orange/50',
+          'transition-all duration-200',
           className,
         )}
         rows={1}
@@ -276,21 +294,21 @@ function PureMultimodalInput({
             }
           }
         }}
-        disabled={isRecording || isTranscribing || status === 'submitted'}
+        disabled={isInputDisabled} // Use combined disabled state
       />
 
       <div className="absolute bottom-3 left-3 flex flex-row items-center gap-2">
         <AttachmentsButton
           fileInputRef={fileInputRef}
           status={status}
-          disabled={isRecording || isTranscribing || status === 'submitted'}
+          disabled={isInputDisabled} // Use combined disabled state
         />
         <VoiceOrb
-          isRecording={isRecording}
-          onClick={toggleListening}
+          voiceState={voiceState} // Use context state directly
+          onClick={toggleListening} // Use updated function
           size={28}
           className={cx('disabled:opacity-50 disabled:cursor-not-allowed')}
-          // disabled={status === 'submitted' || isTranscribing} // Pass disabled if needed
+          // disabled={voiceState === 'thinking' || status === 'submitted'} // Can simplify if isInputDisabled covers it
         />
       </div>
 
@@ -302,14 +320,15 @@ function PureMultimodalInput({
             input={input}
             submitForm={submitForm}
             uploadQueue={uploadQueue}
-            disabled={isRecording || isTranscribing}
+            disabled={isInputDisabled} // Use combined disabled state
           />
         )}
       </div>
 
-      {(isRecording || isTranscribing) && (
-        <div className="text-xs text-center text-zinc-500 absolute bottom-[-20px] left-0 right-0">
-          {isRecording ? 'Listening...' : 'Transcribing...'}
+      {/* Display status text based on context voiceState */}
+      {(voiceState === 'listening' || voiceState === 'thinking') && (
+        <div className="text-xs text-center text-muted-foreground absolute bottom-[-20px] left-0 right-0">
+          {voiceState === 'listening' ? 'Listening...' : 'Transcribing...'}
         </div>
       )}
     </div>
@@ -322,6 +341,8 @@ export const MultimodalInput = memo(
     if (prevProps.input !== nextProps.input) return false;
     if (prevProps.status !== nextProps.status) return false;
     if (!equal(prevProps.attachments, nextProps.attachments)) return false;
+    // Add check for voiceState if it affects rendering significantly
+    // if (prevProps.voiceState !== nextProps.voiceState) return false;
     return true;
   },
 );
@@ -338,7 +359,7 @@ function PureAttachmentsButton({
   return (
     <Button
       data-testid="attachments-button"
-      className="rounded-lg p-2 h-fit text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/50 disabled:opacity-50 disabled:cursor-not-allowed"
+      className="rounded-lg p-2 h-fit text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
       onClick={(event) => {
         event.preventDefault();
         fileInputRef.current?.click();
@@ -363,7 +384,7 @@ function PureStopButton({
   return (
     <Button
       data-testid="stop-button"
-      className="rounded-lg p-2 h-fit bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+      className="rounded-lg p-2 h-fit bg-red-500/80 text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm transition-colors duration-200"
       onClick={(event) => {
         event.preventDefault();
         stop();
@@ -393,7 +414,7 @@ function PureSendButton({
   return (
     <Button
       data-testid="send-button"
-      className="rounded-lg p-2 h-fit bg-zinc-700 text-zinc-100 hover:bg-zinc-600 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed"
+      className="rounded-lg p-2 h-fit bg-brand-orange/90 text-white hover:bg-brand-orange disabled:bg-zinc-800/50 disabled:text-white/30 disabled:cursor-not-allowed transition-all duration-200"
       onClick={(event) => {
         event.preventDefault();
         submitForm();
