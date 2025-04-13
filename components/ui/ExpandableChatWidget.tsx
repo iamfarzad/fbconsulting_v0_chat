@@ -29,25 +29,7 @@ export function ExpandableChatWidget() {
 
   return (
     <>
-      {/* Launcher Button - Use toggleWidget from context */}
-      <Button
-        onClick={toggleWidget}
-        variant="default"
-        className={cn(
-          'fixed bottom-4 right-4 z-50',
-          'rounded-full w-14 h-14 shadow-lg', // Standard FAB size
-          'flex items-center justify-center',
-          'transition-transform hover:scale-110',
-        )}
-        aria-label={isWidgetOpen ? 'Close Chat' : 'Open Chat'}
-      >
-        {/* Toggle icon based on isWidgetOpen */}
-        {isWidgetOpen ? (
-          <X className="h-6 w-6" />
-        ) : (
-          <MessageSquare className="h-6 w-6" />
-        )}
-      </Button>
+      {/* Launcher Button REMOVED - Now handled by global ChatFab */}
 
       {/* Expandable Panel - Controlled by isWidgetOpen */}
       <AnimatePresence>

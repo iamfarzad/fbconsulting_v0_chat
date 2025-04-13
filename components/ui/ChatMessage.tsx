@@ -18,24 +18,22 @@ export function ChatMessage({ message }: { message: Message }) {
   return (
     // Original flex wrapper (no items-center or gap)
     <div className={cn('flex', isUser ? 'justify-end' : 'justify-start')}>
-      {/* Removed assistant avatar div */}
       <div
         className={cn(
-          'max-w-[75%] rounded-lg px-4 py-2.5', // Adjusted padding slightly
-          // Removed shadow-sm
+          'max-w-[75%] px-4 py-3 transition-all duration-200 ease-in-out',
           isUser
-            ? 'bg-brand-orange text-white rounded-br-none' // Use theme brand color
-            : 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-50 rounded-bl-none', // Assistant style from Image 3
+            ? 'rounded-2xl rounded-br-sm bg-brand-orange text-white shadow-lg hover:shadow-orange-500/20'
+            : 'rounded-2xl rounded-bl-sm glassmorphism-base text-white shadow-lg',
         )}
       >
-        <p className="text-sm leading-relaxed whitespace-pre-wrap">
+        <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">
           {message.content}
-        </p>{' '}
+        </p>
         {/* Use content */}
         <div
           className={cn(
-            'text-xs mt-1.5 text-right',
-            isUser ? 'text-white/70' : 'text-gray-400 dark:text-gray-500',
+            'text-xs mt-2 text-right font-medium',
+            isUser ? 'text-white/80' : 'text-white/70',
           )}
         >
           {new Intl.DateTimeFormat('en-US', {
